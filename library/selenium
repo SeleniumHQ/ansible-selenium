@@ -1,0 +1,238 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# selenium: Ansible module for Selenium
+
+from ansible.module_utils.basic import *
+import urllib
+
+DOCUMENTATION = '''
+module: selenium
+short_description: Selenium Infrastructure
+description:
+  - The Description
+version_added: "1.0"
+options:
+  role:
+    description:
+      - Which role should be ran
+    required: true
+    default: null
+    choices:
+      - "hub"
+      - "node"
+
+  state:
+    description:
+      - Which state the program should be in
+    required: true
+    default: present
+    choices:
+      - "running"
+      - "stopped"
+
+  java:
+    description:
+      - The path of the Java executable. You are able to specify the full path of the executable here.
+        e.g. /usr/bin/java
+    required: false
+    default: 'java'
+
+  version:
+    description:
+      - Which version of Selenium to bring down. This can be a branch name, commit hash, or actual version
+      - May also be a release. e.g.: selenium-2.48.2
+    required: false
+    default: 'master'
+
+  path:
+    description:
+      - Where to store and extract the selenium source
+    required: false
+    default: '.'
+
+  force:
+    description:
+      - Force a redownload / restart of the hub/node
+    required: false
+    default: 'false'
+
+
+'''
+
+SOURCE_URL = 'https://codeload.github.com/SeleniumHQ/selenium/tar.gz/%s'
+
+
+def hub(module, state):
+    """
+    Hub tasks
+    :param module: the module
+    :param state:  the state
+    :return:
+    """
+
+    (changed, fl) = download(module)
+    if state == 'running':
+        start(module, fl)
+    elif state == 'stopped':
+        finish(module, 'hub is stopped', changed)
+
+
+def node(module, state):
+    """
+    Node tasks
+    :param module: the module
+    :param state: the state
+    :return:
+    """
+
+    changed, _ = download(module)
+    if state == 'running':
+        finish(module, 'node is running', changed)
+    elif state == 'stopped':
+        finish(module, 'node is stopped', changed)
+
+
+def start(module, jar_file):
+    """
+    Start the jar
+    :param module:
+    :param jar_file: the abs path of the selenium-server-standalone jar
+    :return:
+    """
+
+    if module.params['args']:
+        args = ''
+        for (k, v) in module.params['args']:
+            args += '-%s=%s' % (k, v)
+
+    cmd = "%s -jar %s -role %s" % (module.params['java'],
+                                   jar_file,
+                                   module.params['role'])
+
+    # (rc, out, err) = module.run_command(cmd)
+    finish(module, 'cmd = %s' % cmd)
+
+
+def stop(module):
+    return None
+
+
+def download(module):
+    """
+    Download source from github
+    :param module: the module
+    :return:
+    """
+
+    changed = False
+    url = SOURCE_URL % module.params['version']
+    destination_file = '%s/%s.tar.gz' % (os.path.abspath(os.path.expanduser(module.params['path'])),
+                                         module.params['version'])
+    uncompressed_folder = os.path.abspath(os.path.expanduser('%s/selenium-%s' %
+                                                             (os.path.abspath(os.path.expanduser(module.params['path'])),
+                                                              module.params['version'])))
+
+    if not os.path.exists(destination_file) or module.params['force']:  # download if not already downloaded
+        urllib.urlretrieve(url, destination_file)
+        changed = True
+
+    if not os.path.isdir(uncompressed_folder) or module.params['force']:  # untar if not already untar'ed
+        changed = True
+        import tarfile
+        try:
+            tar = tarfile.open(destination_file)
+            for item in tar:
+                tar.extract(item)
+
+        except tarfile.ExtractError as e:
+            module.fail_json(msg='Couldnt untar %s! message: %s' % (destination_file, e.message))
+
+    c, jar_file = compile_source(module, uncompressed_folder)
+    changed = changed or c
+
+    return changed, jar_file
+
+
+def compile_source(module, folder):
+    """
+    Compile all of the source after downloaded
+    :param module: the module
+    :param folder: the abs path of the untar'ed folder
+    :return: the abs path of the standalone jar file
+    """
+
+    changed = False
+    go = os.path.abspath(folder + '/go')
+
+    cmd = go + ' selenium-server-standalone'
+
+    (rc, out, err) = module.run_command(cmd, cwd=folder)
+
+    if rc != 0:
+        if rc == 127:
+            abort(module, 'Cannot find Java. You may modify the `java` argument to specify the java executable. '
+                          'Trying java command with: %s' % module.params['java'])
+        else:
+            abort(module, '%s returned the code %s!' % (cmd, rc))
+
+    jar_file = os.path.abspath(folder + '/build/java/selenium-server-standalone.jar')
+
+    return changed, jar_file
+
+
+def finish(m, msg='', changed=False):
+    """
+    Role is all down
+    :param m: the module
+    :param msg: the message
+    :param changed: whether or not anything was changed
+    :return:
+    """
+
+    m.exit_json(changed=changed, msg=msg)
+
+
+def abort(m, msg):
+    """
+    Something wrong happened.. abort!
+    :param m: the module
+    :param msg: the message
+    :return:
+    """
+
+    m.fail_json(msg=msg)
+
+
+def main():
+    """
+    Main task / entry point
+    :return:
+    """
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            role=dict(required=True, choices=['hub', 'node'], default=None),
+            state=dict(choices=['running', 'stopped'], default='running'),
+            version=dict(default='master'),
+            path=dict(default='.'),
+            force=dict(default=False),
+            args=dict(required=False, default=''),
+            java=dict(required=False, default='java'),
+        ),
+
+        supports_check_mode=True,
+
+        mutually_exclusive=[]
+    )
+
+    role = module.params['role']
+    state = module.params['state']
+
+    if role == 'hub':
+        hub(module, state)
+    elif role == 'node':
+        node(module, state)
+
+
+main()

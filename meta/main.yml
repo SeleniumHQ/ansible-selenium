@@ -1,0 +1,11 @@
+---
+galaxy_info:
+  author: SeleniumHQ and Contributors
+  license: MIT
+  min_ansible_version: 1.9
+  categories:
+    - selenium
+    - qa
+dependencies:
+  - { role: 'groover.java' }
+version: 0.1.0

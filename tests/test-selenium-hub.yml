@@ -1,0 +1,20 @@
+---
+- name: start selenium grid
+  selenium: >
+    role=hub
+    state=running
+
+  register: something
+  failed_when: something
+
+- name: start selenium node
+  selenium:
+    role: node
+    state: running
+    args:
+      hubUrl: test
+
+
+
+  register: something
+  failed_when: something
