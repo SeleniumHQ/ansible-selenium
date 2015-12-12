@@ -1,0 +1,34 @@
+---
+- name: test | selenium grid starts
+  selenium: >
+    role=hub
+    state=running
+
+  register: pid
+  failed_when: pid.changed == 'false'
+
+- name: test | node connects to grid
+  selenium:
+    role: node
+    state: running
+    logfile: node.log
+    args:
+      hubUrl: http://0.0.0.0:4444/grid/register
+
+
+
+# cleanup
+- name: test | stop selenium node
+  selenium:
+    role: node
+    state: stopped
+  register: r
+  failed_when: r.changed == 'false'
+
+- name: test | stop selenium grid
+  selenium:
+    role: hub
+    state: stopped
+  register: r
+  failed_when: r.changed == 'false'
+

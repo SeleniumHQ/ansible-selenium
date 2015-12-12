@@ -120,3 +120,5 @@ fabric.properties
 .vagrant/
 
 *.tar.gz
+
+*.jar

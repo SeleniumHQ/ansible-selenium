@@ -28,17 +28,18 @@ options:
     description:
       - Which state the program should be in
     required: true
-    default: present
+    default: running
     choices:
       - "running"
       - "stopped"
+      - "restarted"
 
   java:
     description:
       - The path of the Java executable. You are able to specify the full path of the executable here.
         e.g. /usr/bin/java
     required: false
-    default: 'java'
+    default: '/usr/bin/java'
 
   logfile:
     description:
@@ -64,41 +65,46 @@ options:
       - Force a redownload / restart of the hub/node
     required: false
     default: 'false'
+'''
 
+EXAMPLES = '''
+# Start a basic grid that listens on port 4444
+- selenium:
+    role: hub
+    state: running
 
+# Start a grid that runs on port 4445
+- selenium:
+    role: hub
+    state: running
+    args:
+      port: 4445
+
+# Start a basic node that connects locally
+- selenium:
+    role: node
+    state: running
+    args:
+      hubUrl: http://0.0.0.0:4444
+
+# Restart a running node that was listening on a previous port
+- selenium:
+    role: node
+    state: restarted
+    args:
+      hubUrl: http://0.0.0.0:4445
+
+# Start a node that uses a JSON config and has a logfile
+- template: src=config.json.j2 dest=config.json
+- selenium:
+    role: node
+    state: running
+    logfile: node.log
+    args:
+      nodeConfig: config.json
 '''
 
 JAR_URL = 'http://selenium-release.storage.googleapis.com/%s/selenium-server-standalone-%s.jar'
-
-
-def hub(module, state):
-    """
-    Hub tasks
-    :param module: the module
-    :param state:  the state
-    :return:
-    """
-
-    (changed, jar_file) = download(module)
-    if state == 'running':
-        start(module, jar_file)
-    elif state == 'stopped':
-        stop(module)
-
-
-def node(module, state):
-    """
-    Node tasks
-    :param module: the module
-    :param state: the state
-    :return:
-    """
-
-    changed, jar_file = download(module)
-    if state == 'running':
-        start(module, jar_file)
-    elif state == 'stopped':
-        stop(module)
 
 
 def is_running(module):
@@ -131,13 +137,15 @@ def get_pid(module):
         return False
 
 
-def start(module, jar_file):
+def start(module):
     """
     Start the jar
     :param module:
     :param jar_file: the abs path of the selenium-server-standalone jar
     :return:
     """
+
+    _, jar_file = download(module)
 
     changed = False
     role = module.params['role']
@@ -146,7 +154,7 @@ def start(module, jar_file):
         changed = True
         args = ''
         if module.params['args']:
-            for (k, v) in module.params['args']:
+            for (k, v) in module.params['args'].iteritems():
                 args += '-%s=%s ' % (k, v)
 
         java_executable = os.path.abspath(os.path.expandvars(module.params['java']))
@@ -165,7 +173,7 @@ def start(module, jar_file):
 
     pid = get_pid(module)
     if pid:
-        finish(module, msg='%s is running' % role, changed=changed, stdout=pid)
+        return changed, pid
     else:
         abort(module, 'Couldnt fetch the pid of the running %s ! It may have ended abruptly.' % module.params['role'])
 
@@ -188,7 +196,19 @@ def stop(module):
         except Exception as e:
             abort(module, 'Couldnt kill pid %s! Error was: %s' % (pid, e.message))
 
-    finish(module, '%s is stopped' % (module.params['role']), changed=changed)
+    return changed
+
+
+def restart(module):
+    """
+    Restart it
+    :param module: the module
+    :return:
+    """
+
+    changed = stop(module)
+    (c, pid) = start(module)
+    return (c or changed), pid
 
 
 def download(module):
@@ -217,20 +237,15 @@ def download(module):
     return changed, jar_file
 
 
-def finish(m, msg='', stdout=None, changed=False):
+def finish(m, **kwargs):
     """
     Role is all down
     :param m: the module
-    :param msg: the message
-    :param stdout: the output of the program (to be used with register)
-    :param changed: whether or not anything was changed
+    :param kwargs: all arguments
     :return:
     """
 
-    if stdout:
-        m.exit_json(changed=changed, msg=msg, stdout=stdout)
-    else:
-        m.exit_json(changed=changed, msg=msg)
+    m.exit_json(**kwargs)
 
 
 def abort(m, msg):
@@ -253,7 +268,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             role=dict(required=True, choices=['hub', 'node'], default=None),
-            state=dict(choices=['running', 'stopped'], default='running'),
+            state=dict(choices=['running', 'stopped', 'restarted'], default='running'),
             version=dict(default='2.42.2'),
             path=dict(default='.'),
             force=dict(default=False),
@@ -267,13 +282,18 @@ def main():
         mutually_exclusive=[]
     )
 
-    role = module.params['role']
     state = module.params['state']
+    role = module.params['role']
 
-    if role == 'hub':
-        hub(module, state)
-    elif role == 'node':
-        node(module, state)
+    if state == 'running':
+        (changed, pid) = start(module)
+        finish(module, msg='%s is running' % role, changed=changed, pid=pid)
+    elif state == 'stopped':
+        changed = stop(module)
+        finish(module, msg='%s is stopped' % role, changed=changed)
+    elif state == 'restarted':
+        (changed, pid) = restart(module)
+        finish(module, msg='%s has restarted' % role, changed=changed, pid=pid)
 
 
 main()

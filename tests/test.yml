@@ -1,8 +1,11 @@
 ---
 - hosts: localhost
   remote_user: root
+  connection: local
+
   roles:
     - ../..
 
   tasks:
     - include: test-selenium-hub.yml
+    - include: test-selenium-node.yml

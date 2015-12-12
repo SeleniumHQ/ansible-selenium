@@ -1,20 +1,24 @@
 ---
-- name: start selenium grid
+- name: test | selenium grid starts
   selenium: >
     role=hub
     state=running
 
-  register: something
-  failed_when: something
+  register: pid
+  failed_when: pid.changed == 'false'
 
-- name: start selenium node
+- name: test | selenium grid has the same pid
+  selenium: >
+    role=hub
+    state=running
+  register: second_pid
+  failed_when: pid.changed == 'true' and pid.pid != second_pid.pid
+
+# cleanup
+- name: stop selenium grid
   selenium:
-    role: node
-    state: running
-    args:
-      hubUrl: test
+    role: hub
+    state: stopped
+  register: r
+  failed_when: r.changed == 'false'
 
-
-
-  register: something
-  failed_when: something
