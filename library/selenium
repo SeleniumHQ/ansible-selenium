@@ -3,9 +3,9 @@
 #
 # selenium: Ansible module for Selenium
 
+import signal
 import urllib
 
-import signal
 from ansible.module_utils.basic import *
 
 DOCUMENTATION = '''
@@ -94,11 +94,11 @@ def node(module, state):
     :return:
     """
 
-    changed, _ = download(module)
+    changed, jar_file = download(module)
     if state == 'running':
-        finish(module, 'node is running', changed)
+        start(module, jar_file)
     elif state == 'stopped':
-        finish(module, 'node is stopped', changed)
+        stop(module)
 
 
 def is_running(module):
@@ -108,10 +108,10 @@ def is_running(module):
     :return:
     """
 
-    if get_pid(module):
-        return True
-    else:
+    if not get_pid(module):
         return False
+    else:
+        return True
 
 
 def get_pid(module):
@@ -126,7 +126,7 @@ def get_pid(module):
                (module.params['version'], role)]
 
     try:
-        return subprocess.check_output(pid_cmd).rstrip()
+        return int(subprocess.check_output(pid_cmd).rstrip())
     except subprocess.CalledProcessError:
         return False
 
@@ -177,15 +177,18 @@ def stop(module):
     :return:
     """
 
+    changed = False
     pid = get_pid(module)
 
     if is_running(module):
         try:
-            os.kill(pid, sig=signal.SIGTERM)
+            os.kill(pid, signal.SIGKILL)
+            if not get_pid(module):
+                changed = True
         except Exception as e:
-            abort(module, 'Couldnt kill pid %s ! Error was: %s' % (pid, e.message))
+            abort(module, 'Couldnt kill pid %s! Error was: %s' % (pid, e.message))
 
-        finish(module, changed=True)
+    finish(module, '%s is stopped' % (module.params['role']), changed=changed)
 
 
 def download(module):
