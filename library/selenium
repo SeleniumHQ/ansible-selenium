@@ -3,8 +3,10 @@
 #
 # selenium: Ansible module for Selenium
 
-from ansible.module_utils.basic import *
 import urllib
+
+import signal
+from ansible.module_utils.basic import *
 
 DOCUMENTATION = '''
 module: selenium
@@ -38,6 +40,12 @@ options:
     required: false
     default: 'java'
 
+  logfile:
+    description:
+      - Where to log the output of the hub / node
+    required: false
+    default: './selenium.log
+
   version:
     description:
       - Which version of Selenium to bring down. This can be a branch name, commit hash, or actual version
@@ -60,7 +68,7 @@ options:
 
 '''
 
-SOURCE_URL = 'https://codeload.github.com/SeleniumHQ/selenium/tar.gz/%s'
+JAR_URL = 'http://selenium-release.storage.googleapis.com/%s/selenium-server-standalone-%s.jar'
 
 
 def hub(module, state):
@@ -71,11 +79,11 @@ def hub(module, state):
     :return:
     """
 
-    (changed, fl) = download(module)
+    (changed, jar_file) = download(module)
     if state == 'running':
-        start(module, fl)
+        start(module, jar_file)
     elif state == 'stopped':
-        finish(module, 'hub is stopped', changed)
+        stop(module)
 
 
 def node(module, state):
@@ -93,6 +101,36 @@ def node(module, state):
         finish(module, 'node is stopped', changed)
 
 
+def is_running(module):
+    """
+    Whether or not the specific role in question is running right now.
+    :param module:
+    :return:
+    """
+
+    if get_pid(module):
+        return True
+    else:
+        return False
+
+
+def get_pid(module):
+    """
+    Fetches the pid if it is running, for the role.
+    :param module: the module
+    :return:
+    """
+
+    role = module.params['role'].replace(".", "\\.")
+    pid_cmd = ['pgrep', '-f', '.*selenium-server-%s.*%s' %
+               (module.params['version'], role)]
+
+    try:
+        return subprocess.check_output(pid_cmd).rstrip()
+    except subprocess.CalledProcessError:
+        return False
+
+
 def start(module, jar_file):
     """
     Start the jar
@@ -101,96 +139,94 @@ def start(module, jar_file):
     :return:
     """
 
-    if module.params['args']:
+    changed = False
+    role = module.params['role']
+
+    if not is_running(module):
+        changed = True
         args = ''
-        for (k, v) in module.params['args']:
-            args += '-%s=%s' % (k, v)
+        if module.params['args']:
+            for (k, v) in module.params['args']:
+                args += '-%s=%s ' % (k, v)
 
-    cmd = "%s -jar %s -role %s" % (module.params['java'],
-                                   jar_file,
-                                   module.params['role'])
+        java_executable = os.path.abspath(os.path.expandvars(module.params['java']))
+        log_file = os.path.abspath(os.path.expandvars(module.params['logfile']))
 
-    # (rc, out, err) = module.run_command(cmd)
-    finish(module, 'cmd = %s' % cmd)
+        cmd = "%s -jar %s -role %s %s >> %s 2>&1 &" % (java_executable,
+                                                       jar_file,
+                                                       role,
+                                                       args,
+                                                       log_file)
+
+        rc = os.system(cmd)
+
+        if rc != 0:
+            abort(module, 'Running the %s role returned code %s !' % (role, rc))
+
+    pid = get_pid(module)
+    if pid:
+        finish(module, msg='%s is running' % role, changed=changed, stdout=pid)
+    else:
+        abort(module, 'Couldnt fetch the pid of the running %s ! It may have ended abruptly.' % module.params['role'])
 
 
 def stop(module):
-    return None
+    """
+    Stop something
+    :param module: the module
+    :return:
+    """
+
+    pid = get_pid(module)
+
+    if is_running(module):
+        try:
+            os.kill(pid, sig=signal.SIGTERM)
+        except Exception as e:
+            abort(module, 'Couldnt kill pid %s ! Error was: %s' % (pid, e.message))
+
+        finish(module, changed=True)
 
 
 def download(module):
     """
-    Download source from github
+    Download jar from downloads page
     :param module: the module
     :return:
     """
 
     changed = False
-    url = SOURCE_URL % module.params['version']
-    destination_file = '%s/%s.tar.gz' % (os.path.abspath(os.path.expanduser(module.params['path'])),
-                                         module.params['version'])
-    uncompressed_folder = os.path.abspath(os.path.expanduser('%s/selenium-%s' %
-                                                             (os.path.abspath(os.path.expanduser(module.params['path'])),
-                                                              module.params['version'])))
 
-    if not os.path.exists(destination_file) or module.params['force']:  # download if not already downloaded
-        urllib.urlretrieve(url, destination_file)
-        changed = True
+    full_version = module.params['version']
+    (major, minor, patch) = full_version.split('.')
 
-    if not os.path.isdir(uncompressed_folder) or module.params['force']:  # untar if not already untar'ed
-        changed = True
-        import tarfile
+    url = JAR_URL % ((major + '.' + minor), full_version)
+    jar_file = '%s/selenium-server-%s.jar' % (os.path.abspath(os.path.expanduser(module.params['path'])),
+                                              full_version)
+
+    if not os.path.exists(jar_file) or module.params['force']:  # download if not already downloaded
         try:
-            tar = tarfile.open(destination_file)
-            for item in tar:
-                tar.extract(item)
-
-        except tarfile.ExtractError as e:
-            module.fail_json(msg='Couldnt untar %s! message: %s' % (destination_file, e.message))
-
-    c, jar_file = compile_source(module, uncompressed_folder)
-    changed = changed or c
-
+            urllib.urlretrieve(url, jar_file)
+            changed = True
+        except Exception as e:
+            abort(module, "Couldn't download %s. Are you using a valid version? Error was: %s" %
+                  (url, e.message))
     return changed, jar_file
 
 
-def compile_source(module, folder):
-    """
-    Compile all of the source after downloaded
-    :param module: the module
-    :param folder: the abs path of the untar'ed folder
-    :return: the abs path of the standalone jar file
-    """
-
-    changed = False
-    go = os.path.abspath(folder + '/go')
-
-    cmd = go + ' selenium-server-standalone'
-
-    (rc, out, err) = module.run_command(cmd, cwd=folder)
-
-    if rc != 0:
-        if rc == 127:
-            abort(module, 'Cannot find Java. You may modify the `java` argument to specify the java executable. '
-                          'Trying java command with: %s' % module.params['java'])
-        else:
-            abort(module, '%s returned the code %s!' % (cmd, rc))
-
-    jar_file = os.path.abspath(folder + '/build/java/selenium-server-standalone.jar')
-
-    return changed, jar_file
-
-
-def finish(m, msg='', changed=False):
+def finish(m, msg='', stdout=None, changed=False):
     """
     Role is all down
     :param m: the module
     :param msg: the message
+    :param stdout: the output of the program (to be used with register)
     :param changed: whether or not anything was changed
     :return:
     """
-
-    m.exit_json(changed=changed, msg=msg)
+    if stdout:
+        m.exit_json(changed=changed, msg=msg, stdout=stdout)
+    else:
+        m.exit_json(changed=changed, msg=msg)
 
 
 def abort(m, msg):
@@ -214,11 +250,12 @@ def main():
         argument_spec=dict(
             role=dict(required=True, choices=['hub', 'node'], default=None),
             state=dict(choices=['running', 'stopped'], default='running'),
-            version=dict(default='master'),
+            version=dict(default='2.42.2'),
             path=dict(default='.'),
             force=dict(default=False),
             args=dict(required=False, default=''),
-            java=dict(required=False, default='java'),
+            java=dict(required=False, default='/usr/bin/java'),
+            logfile=dict(required=False, default='./selenium.log')
         ),
 
         supports_check_mode=True,

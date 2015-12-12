@@ -1,6 +1,9 @@
 ---
 galaxy_info:
-  author: SeleniumHQ and Contributors
+  author:
+    - "Daniel Davison"
+    - "SeleniumHQ Contributors"
+    - "Contributors"
   license: MIT
   min_ansible_version: 1.9
   categories:

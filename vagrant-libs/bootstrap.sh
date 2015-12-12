@@ -4,6 +4,7 @@
 apt-get update
 
 # Install packages
+#  ibus libdbus-1-dev libgtk2.0-dev
 apt-get install -y git python-pip python-dev python-pip python-virtualenv sshpass openjdk-7-jdk
 
 # Install Ansible if not already existing
