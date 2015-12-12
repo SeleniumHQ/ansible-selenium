@@ -9,3 +9,4 @@
   tasks:
     - include: test-selenium-hub.yml
     - include: test-selenium-node.yml
+    - include: test-selenium-memory.yml

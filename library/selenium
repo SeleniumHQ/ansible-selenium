@@ -47,6 +47,11 @@ options:
     required: false
     default: './selenium.log
 
+  javaargs:
+    description:
+      - Java options to specify. e.g.: Xmx1024M
+    required: false
+
   version:
     description:
       - Which version of Selenium to bring down. This can be a branch name, commit hash, or actual version
@@ -79,6 +84,14 @@ EXAMPLES = '''
     state: running
     args:
       port: 4445
+
+# Start the grid with greater memory
+- selenium:
+    role: hub
+    state: running
+    javaargs:
+        - Xmx1024M
+        - Xmy1024M
 
 # Start a basic node that connects locally
 - selenium:
@@ -139,9 +152,8 @@ def get_pid(module):
 
 def start(module):
     """
-    Start the jar
+    Start the Selenium standalone
     :param module:
-    :param jar_file: the abs path of the selenium-server-standalone jar
     :return:
     """
 
@@ -153,18 +165,24 @@ def start(module):
     if not is_running(module):
         changed = True
         args = ''
+        java_args = ''
         if module.params['args']:
             for (k, v) in module.params['args'].iteritems():
                 args += '-%s=%s ' % (k, v)
 
+        if module.params['javaargs']:
+            for arg in java_args:
+                java_args += '-%s ' % arg
+
         java_executable = os.path.abspath(os.path.expandvars(module.params['java']))
         log_file = os.path.abspath(os.path.expandvars(module.params['logfile']))
 
-        cmd = "%s -jar %s -role %s %s >> %s 2>&1 &" % (java_executable,
-                                                       jar_file,
-                                                       role,
-                                                       args,
-                                                       log_file)
+        cmd = "%s %s -jar %s -role %s %s >> %s 2>&1 &" % (java_executable,
+                                                          java_args,
+                                                          jar_file,
+                                                          role,
+                                                          args,
+                                                          log_file)
 
         rc = os.system(cmd)
 
@@ -274,7 +292,8 @@ def main():
             force=dict(default=False),
             args=dict(required=False, default=''),
             java=dict(required=False, default='/usr/bin/java'),
-            logfile=dict(required=False, default='./selenium.log')
+            logfile=dict(required=False, default='./selenium.log'),
+            javaargs=dict(required=False, default=''),
         ),
 
         supports_check_mode=False,

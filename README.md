@@ -1,13 +1,14 @@
 Selenium module for Ansible
 ===
 
+Get it! `ansible-galaxy install seleniumhq.selenium`
 
 Testing
 ===
 
 *(The following instructions are for those using Vagrant)*
 
-Before running tests:  
+Before running tests:
 
 ```sh
 alias test-module=/home/vagrant/ansible/hacking/test-module

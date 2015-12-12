@@ -14,6 +14,13 @@
   register: second_pid
   failed_when: pid.changed == 'true' and pid.pid != second_pid.pid
 
+- name: test | selenium grid restarts
+  selenium:
+    role: hub
+    state: restarted
+  register: third_pid
+  failed_when: third_pid.changed == 'false' and third_pid.pid == second_pid.pid
+
 # cleanup
 - name: stop selenium grid
   selenium:

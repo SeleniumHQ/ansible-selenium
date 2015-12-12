@@ -1,0 +1,19 @@
+---
+- name: test | selenium grid starts
+  selenium:
+    role: hub
+    state: running
+    javaargs:
+      - Xmx12M
+
+  register: pid
+  failed_when: pid.changed == 'false'
+
+## cleanup
+- name: stop selenium grid
+  selenium:
+    role: hub
+    state: stopped
+  register: r
+  failed_when: r.changed == 'false'
+
