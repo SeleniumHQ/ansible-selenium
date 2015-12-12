@@ -2,13 +2,11 @@
 galaxy_info:
   author:
     - "Daniel Davison"
-    - "SeleniumHQ Contributors"
     - "Contributors"
   license: MIT
   min_ansible_version: 1.9
   categories:
     - selenium
     - qa
-dependencies:
-  - { role: 'groover.java' }
+dependencies: []
 version: 0.1.0

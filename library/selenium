@@ -226,6 +226,7 @@ def finish(m, msg='', stdout=None, changed=False):
     :param changed: whether or not anything was changed
     :return:
     """
+
     if stdout:
         m.exit_json(changed=changed, msg=msg, stdout=stdout)
     else:
@@ -261,7 +262,7 @@ def main():
             logfile=dict(required=False, default='./selenium.log')
         ),
 
-        supports_check_mode=True,
+        supports_check_mode=False,
 
         mutually_exclusive=[]
     )
