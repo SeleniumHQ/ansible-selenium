@@ -1,7 +1,7 @@
 Selenium module for Ansible
 ===
 
-Get it! `ansible-galaxy install seleniumhq.selenium`
+Get it! `ansible-galaxy install ddavison.selenium`
 
 
 Use It
