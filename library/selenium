@@ -184,7 +184,7 @@ def start(module):
                 args += '-%s=%s ' % (k, v)
 
         if module.params['javaargs']:
-            for arg in java_args:
+            for arg in module.params['javaargs']:
                 java_args += '-%s ' % arg
 
         java_executable = os.path.abspath(os.path.expandvars(module.params['java']))
