@@ -2,8 +2,9 @@
 galaxy_info:
   author:
     - "Daniel Davison"
+    - "Software Freedom Conservancy"
     - "Contributors"
-  license: MIT
+  license: Apache 2.0
   min_ansible_version: 1.9
   categories:
     - selenium
