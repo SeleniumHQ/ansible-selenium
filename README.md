@@ -77,7 +77,7 @@ To test the module manually, you can run:
 ```sh
 cd library/
 test-module -m ./selenium -a "role=hub state=running"
-``
+```
 
 To run all tests:
 
