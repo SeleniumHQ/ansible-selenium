@@ -9,5 +9,4 @@ galaxy_info:
   categories:
     - selenium
     - qa
-dependencies: []
-version: 0.1.0
+  dependencies: []

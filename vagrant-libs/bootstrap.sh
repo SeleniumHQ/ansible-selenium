@@ -10,7 +10,7 @@ apt-get install -y git python-pip python-dev python-pip python-virtualenv sshpas
 # Install Ansible if not already existing
 if [ ! -d /home/vagrant/ansible ]; then
   git clone git://github.com/ansible/ansible.git --recursive /home/vagrant/ansible;
-  cd /home/vagrant/ansible && git fetch && git checkout stable-1.9 && git pull && git submodule update --init --recursive && make && make install;
+  cd /home/vagrant/ansible && git fetch && git checkout stable-2.0 && git pull && git submodule update --init --recursive && make && make install;
 fi
 
 alias test-module=/home/vagrant/ansible/hacking/test-module
