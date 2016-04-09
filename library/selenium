@@ -300,7 +300,7 @@ def main():
         argument_spec=dict(
             role=dict(required=True, choices=['hub', 'node'], default=None),
             state=dict(choices=['running', 'stopped', 'restarted'], default='running'),
-            version=dict(default='2.52.0'),
+            version=dict(default='2.53.0'),
             path=dict(default='.'),
             force=dict(default=False),
             args=dict(required=False, default=''),
