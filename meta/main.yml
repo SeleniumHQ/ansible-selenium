@@ -9,10 +9,8 @@ galaxy_info:
     - name: Ubuntu
       versions:
         - all
-  dependencies: []
   min_ansible_version: 1.9
   galaxy_tags:
     - selenium
-    - selenium-hub
-    - selenium-node
     - qa
+dependencies: []
