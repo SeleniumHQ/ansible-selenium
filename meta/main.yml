@@ -11,7 +11,8 @@ galaxy_info:
         - all
   dependencies: []
   min_ansible_version: 1.9
-  categories:
+  galaxy_tags:
     - selenium
+    - selenium-hub
+    - selenium-node
     - qa
-  dependencies: []
