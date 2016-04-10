@@ -5,6 +5,11 @@ galaxy_info:
     - "Software Freedom Conservancy"
     - "Contributors"
   license: Apache 2.0
+  platforms: 
+    - name: Ubuntu
+      versions:
+        - all
+  dependencies: []
   min_ansible_version: 1.9
   categories:
     - selenium
