@@ -122,3 +122,4 @@ fabric.properties
 *.tar.gz
 
 *.jar
+*.retry

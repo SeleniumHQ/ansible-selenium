@@ -12,6 +12,11 @@ After using ansible galaxy to install the module, take the `library/selenium` fi
 Include it in your playbook/roles:
 
 ```yaml
+- name: Start a standalone server
+  selenium:
+    role: standalone
+    state: running
+
 - name: Start a basic grid that listens on port 4444
   selenium:
     role: hub
@@ -58,6 +63,10 @@ Include it in your playbook/roles:
         logfile: node.log
         args:
           nodeConfig: config.json
+
+- name: Stop the running selenium standalone server
+  selenium:
+    state: stopped
 ```
 
 

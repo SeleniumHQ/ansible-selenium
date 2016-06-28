@@ -5,7 +5,22 @@ apt-get update
 
 # Install packages
 #  ibus libdbus-1-dev libgtk2.0-dev
-apt-get install -y git python-pip python-dev python-pip python-virtualenv sshpass openjdk-7-jdk
+apt-get install -y \
+  git \
+  python-pip \
+  python-dev \
+  python-pip \
+  python-virtualenv \
+  sshpass \
+  openssl \
+  libssl-dev \
+  openjdk-7-jdk \
+  libffi6 \
+  libffi-dev
+
+pip install --upgrade setuptools
+pip install idna
+pip install pycparser
 
 # Install Ansible if not already existing
 if [ ! -d /home/vagrant/ansible ]; then

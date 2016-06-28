@@ -1,0 +1,29 @@
+---
+- name: test | standalone starts with role
+  selenium: >
+    role=standalone
+    state=running
+
+  register: pid
+  failed_when: pid.changed == 'false'
+
+- name: test | standalone has the same pid
+  selenium: >
+    role=standalone
+    state=running
+  register: second_pid
+  failed_when: pid.changed == 'true' and pid.pid != second_pid.pid
+
+- name: test | standalone restarts without role
+  selenium:
+    state: restarted
+  register: third_pid
+  failed_when: third_pid.changed == 'false' and third_pid.pid == second_pid.pid
+
+# cleanup
+- name: stop standalone without role
+  selenium:
+    state: stopped
+  register: r
+  failed_when: r.changed == 'false'
+

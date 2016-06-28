@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright 2015 Daniel Davison and Software Freedom Conservancy
+#  <https://github.com/seleniumhq/ansible-selenium>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,9 +32,10 @@ options:
   role:
     description:
       - Which role should be ran
-    required: true
-    default: null
+    required: false
+    default: 'standalone'
     choices:
+      - "standalone"
       - "hub"
       - "node"
 
@@ -86,6 +88,10 @@ options:
 '''
 
 EXAMPLES = '''
+# Start a standalone server
+- selenium:
+    state: running
+
 # Start a basic grid that listens on port 4444
 - selenium:
     role: hub
@@ -153,9 +159,8 @@ def get_pid(module):
     :return:
     """
 
-    role = module.params['role'].replace(".", "\\.")
-    pid_cmd = ['pgrep', '-f', '.*selenium-server-%s.*%s' %
-               (module.params['version'], role)]
+    pid_cmd = ['pgrep', '-f', '.*selenium-server-%s' %
+               (module.params['version'])]
 
     try:
         return int(subprocess.check_output(pid_cmd).rstrip())
@@ -174,6 +179,10 @@ def start(module):
 
     changed = False
     role = module.params['role']
+    if role != 'standalone':
+      role = "-role %s" % role
+    else: 
+      role = ''
 
     if not is_running(module):
         changed = True
@@ -190,13 +199,13 @@ def start(module):
         java_executable = os.path.abspath(os.path.expandvars(module.params['java']))
         log_file = os.path.abspath(os.path.expandvars(module.params['logfile']))
 
-        cmd = "%s %s -jar %s -role %s %s >> %s 2>&1 &" % (java_executable,
+        cmd = "%s %s -jar %s %s %s >> %s 2>&1 &" % (java_executable,
                                                           java_args,
                                                           jar_file,
                                                           role,
                                                           args,
                                                           log_file)
-
+        #print cmd
         rc = os.system(cmd)
 
         if rc != 0:
@@ -298,7 +307,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            role=dict(required=True, choices=['hub', 'node'], default=None),
+            role=dict(choices=['standalone', 'hub', 'node'], default='standalone'),
             state=dict(choices=['running', 'stopped', 'restarted'], default='running'),
             version=dict(default='2.53.0'),
             path=dict(default='.'),
