@@ -311,7 +311,7 @@ def main():
             state=dict(choices=['running', 'stopped', 'restarted'], default='running'),
             version=dict(default='2.53.0'),
             path=dict(default='.'),
-            force=dict(default=False),
+            force=dict(default=False, type='bool'),
             args=dict(required=False, default=''),
             java=dict(required=False, default='/usr/bin/java'),
             logfile=dict(required=False, default='./selenium.log'),
