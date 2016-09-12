@@ -205,6 +205,9 @@ def start(module):
                                                           role,
                                                           args,
                                                           log_file)
+
+        os.setsid()
+
         #print cmd
         rc = os.system(cmd)
 
