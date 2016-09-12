@@ -1,0 +1,14 @@
+---
+language: python
+python: "2.7"
+
+before_install:
+  - sudo apt-get update -qq
+
+install:
+  - pip install -I ansible==2.0.2.0
+
+script:
+  - ansible-playbook -i tests/localhost, tests/test.yml --syntax-check
+  - ansible-playbook -i tests/localhost, tests/test.yml --connection=local --sudo
+  - ansible-playbook -i tests/localhost, tests/test.yml --connection=local --sudo # check for idempotency
