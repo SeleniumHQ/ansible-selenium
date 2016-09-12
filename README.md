@@ -2,6 +2,8 @@ Selenium module for Ansible
 ===
 
 Get it! `ansible-galaxy install SeleniumHQ.selenium`
+[![star this repo](http://githubbadges.com/star.svg?user=seleniumhq&repo=ansible-selenium&style=default)](https://github.com/seleniumhq/ansible-selenium)
+[![fork this repo](http://githubbadges.com/fork.svg?user=seleniumhq&repo=ansible-selenium&style=default)](https://github.com/seleniumhq/ansible-selenium/fork)
 
 
 Use It
