@@ -92,6 +92,11 @@ EXAMPLES = '''
 - selenium:
     state: running
 
+# Start a standalone server (specific version of selenium)
+- selenium:
+    version: 2.53.1
+    state: running
+
 # Start a basic grid that listens on port 4444
 - selenium:
     role: hub
