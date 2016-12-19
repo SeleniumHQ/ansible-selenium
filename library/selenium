@@ -323,7 +323,7 @@ def main():
             args=dict(required=False, default=''),
             java=dict(required=False, default='/usr/bin/java'),
             logfile=dict(required=False, default='./selenium.log'),
-            javaargs=dict(required=False, default=''),
+            javaargs=dict(required=False, default=[], type='list'),
         ),
 
         supports_check_mode=False,
