@@ -9,9 +9,9 @@ galaxy_info:
     - name: Ubuntu
       versions:
         - all
-    - name: Centos
+    - name: EL
       versions:
-        - 7
+        - 7 
   min_ansible_version: 1.9
   galaxy_tags:
     - selenium
