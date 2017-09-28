@@ -94,7 +94,7 @@ EXAMPLES = '''
 
 # Start a standalone server (specific version of selenium)
 - selenium:
-    version: 2.53.1
+    version: 3.5.3
     state: running
 
 # Start a basic grid that listens on port 4444
@@ -317,7 +317,7 @@ def main():
         argument_spec=dict(
             role=dict(choices=['standalone', 'hub', 'node'], default='standalone'),
             state=dict(choices=['running', 'stopped', 'restarted'], default='running'),
-            version=dict(default='3.4.0'),
+            version=dict(default='3.6.0'),
             path=dict(default='.'),
             force=dict(default=False, type='bool'),
             args=dict(required=False, default=''),
