@@ -317,7 +317,7 @@ def main():
         argument_spec=dict(
             role=dict(choices=['standalone', 'hub', 'node'], default='standalone'),
             state=dict(choices=['running', 'stopped', 'restarted'], default='running'),
-            version=dict(default='3.6.0'),
+            version=dict(default='3.8.1'),
             path=dict(default='.'),
             force=dict(default=False, type='bool'),
             args=dict(required=False, default=''),
