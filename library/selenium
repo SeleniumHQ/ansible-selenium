@@ -320,7 +320,7 @@ def main():
             version=dict(default='3.8.1'),
             path=dict(default='.'),
             force=dict(default=False, type='bool'),
-            args=dict(required=False, default=''),
+            args=dict(required=False, default='', type='dict'),
             java=dict(required=False, default='/usr/bin/java'),
             logfile=dict(required=False, default='./selenium.log'),
             javaargs=dict(required=False, default=[], type='list'),
