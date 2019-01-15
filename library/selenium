@@ -186,7 +186,7 @@ def start(module):
     role = module.params['role']
     if role != 'standalone':
       role = "-role %s" % role
-    else: 
+    else:
       role = ''
 
     if not is_running(module):
@@ -195,7 +195,7 @@ def start(module):
         java_args = ''
         if module.params['args']:
             for (k, v) in module.params['args'].iteritems():
-                args += '-%s=%s ' % (k, v)
+                args += '-%s %s ' % (k, v)
 
         if module.params['javaargs']:
             for arg in module.params['javaargs']:
@@ -320,7 +320,7 @@ def main():
             version=dict(default='3.13.0'),
             path=dict(default='.'),
             force=dict(default=False, type='bool'),
-            args=dict(required=False, default='', type='dict'),
+            args=dict(required=False, default={}, type='dict'),
             java=dict(required=False, default='/usr/bin/java'),
             logfile=dict(required=False, default='./selenium.log'),
             javaargs=dict(required=False, default=[], type='list'),
