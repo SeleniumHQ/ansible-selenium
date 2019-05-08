@@ -17,74 +17,57 @@
 # limitations under the License.
 # selenium: Ansible module for Selenium
 
-import signal
-import urllib
-
-from ansible.module_utils.basic import *
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
+---
 module: selenium
 short_description: Selenium Infrastructure
-description:
-  - The Description
+description: Manage Selenium Hub and Nodes
 version_added: "1.0"
+author: Dan Davison (@ddavison)
 options:
   role:
-    description:
-      - Which role should be ran
+    description: Which role should be ran
     required: false
     default: 'standalone'
     choices:
       - "standalone"
       - "hub"
       - "node"
-
   state:
-    description:
-      - Which state the program should be in
+    description: Which state the program should be in
     required: true
     default: running
     choices:
       - "running"
       - "stopped"
       - "restarted"
-
   java:
-    description:
-      - The path of the Java executable. You are able to specify the full path of the executable here.
-        e.g. /usr/bin/java
+    description: The path of the Java executable
     required: false
     default: '/usr/bin/java'
-
   logfile:
-    description:
-      - Where to log the output of the hub / node
+    description: Where to log the output of the hub / node
     required: false
-    default: './selenium.log
-
+    default: './selenium.log'
   javaargs:
-    description:
-      - Java options to specify. e.g.: Xmx1024M
+    description: Java options to specify. e.g. Xmx1024M
     required: false
-
   version:
-    description:
-      - Which version of Selenium to bring down. This can be a branch name, commit hash, or actual version
-      - May also be a release. e.g.: selenium-2.48.2
+    description: Which version of Selenium to bring down. Can be branch name, hash, version, release, tag
     required: false
     default: 'master'
-
   path:
-    description:
-      - Where to store and extract the selenium source
+    description: Where to store the standalone server
     required: false
     default: '.'
-
   force:
-    description:
-      - Force a redownload / restart of the hub/node
+    description: Force a redownload / restart of the standalone server
     required: false
-    default: 'false'
+    default: false
 '''
 
 EXAMPLES = '''
@@ -143,6 +126,10 @@ EXAMPLES = '''
 
 JAR_URL = 'http://selenium-release.storage.googleapis.com/%s/selenium-server-standalone-%s.jar'
 
+import signal
+import urllib
+
+from ansible.module_utils.basic import *
 
 def is_running(module):
     """
@@ -317,7 +304,7 @@ def main():
         argument_spec=dict(
             role=dict(choices=['standalone', 'hub', 'node'], default='standalone'),
             state=dict(choices=['running', 'stopped', 'restarted'], default='running'),
-            version=dict(default='3.13.0'),
+            version=dict(default='3.141.59'),
             path=dict(default='.'),
             force=dict(default=False, type='bool'),
             args=dict(required=False, default={}, type='dict'),
