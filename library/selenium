@@ -124,7 +124,8 @@ EXAMPLES = '''
       nodeConfig: config.json
 '''
 
-JAR_URL = 'http://selenium-release.storage.googleapis.com/%s/selenium-server-standalone-%s.jar'
+# use https
+JAR_URL = 'https://selenium-release.storage.googleapis.com/%s/selenium-server-standalone-%s.jar'
 
 import signal
 import urllib
